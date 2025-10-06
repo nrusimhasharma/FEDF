@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All-in-One Weather App</title>
+  <style>
+    /* --- CSS Styling --- */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f0f2f5;
+      margin: 0;
+    }
+
+    #app {
+      width: 90%;
+      max-width: 420px;
+      padding: 25px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    input {
+      flex-grow: 1;
+      padding: 10px 15px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #007BFF;
+    }
+
+    button {
+      padding: 10px 16px;
+      margin-left: 8px;
+      border: none;
+      border-radius: 8px;
+      background: #007BFF;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background: #11ff00;
+    }
+
+    #weatherDisplay {
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+
+    .error {
+      color: #000000;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h2>🌦️ Modern Weather App</h2>
+    <form id="weatherForm">
+      <input type="text" id="cityInput" placeholder="Enter city name" required />
+      <button type="submit">Get Weather</button>
+    </form>
+    <div id="weatherDisplay"></div>
+    <div id="errorDisplay" class="error"></div>
+  </div>
+
+  <script>
+    // --- JavaScript Logic ---
+
+    // --- Configuration and DOM Elements ---
+    const apiKey = "0e55753b3b447e61cf143cbac0bb76d2"; // 🔑 Your OpenWeatherMap API key
+    const apiUrl = "https://api.openweathermap.org/data/2.5/weather";
+
+    const weatherForm = document.getElementById("weatherForm");
+    const cityInput = document.getElementById("cityInput");
+    const weatherDisplay = document.getElementById("weatherDisplay");
+    const errorDisplay = document.getElementById("errorDisplay");
+
+    // --- Functions ---
+
+    /**
+     * Fetches weather data from the API for a given city.
+     */
+    async function fetchWeather(city) {
+      try {
+        const response = await fetch(`${apiUrl}?q=${city}&appid=${apiKey}&units=metric`);
+        if (!response.ok) {
+          throw new Error("City not found or API error.");
+        }
+        return await response.json();
+      } catch (error) {
+        throw error; // Propagate the error to be handled by the caller
+      }
+    }
+
+    /**
+     * Renders the weather data on the page.
+     */
+    function displayWeather(data) {
+      weatherDisplay.innerHTML = `
+        <h3>${data.name}, ${data.sys.country}</h3>
+        <p>🌡️ Temperature: <strong>${Math.round(data.main.temp)}°C</strong></p>
+        <p>☁️ Conditions: <strong>${data.weather[0].description}</strong></p>
+        <p>💧 Humidity: <strong>${data.main.humidity}%</strong></p>
+      `;
+    }
+
+    /**
+     * Displays an error message.
+     */
+    function displayError(message) {
+      errorDisplay.textContent = `❌ ${message}`;
+    }
+
+    /**
+     * Clears previous weather data and error messages.
+     */
+    function clearUI() {
+      weatherDisplay.innerHTML = "";
+      errorDisplay.textContent = "";
+    }
+
+    // --- Event Listeners ---
+
+    /**
+     * Handles the form submission to get weather data.
+     */
+    weatherForm.addEventListener("submit", async (event) => {
+      event.preventDefault(); // Prevent page reload
+      const city = cityInput.value.trim();
+      
+      clearUI();
+      weatherDisplay.textContent = "Loading...";
+
+      try {
+        const weatherData = await fetchWeather(city);
+        displayWeather(weatherData);
+        localStorage.setItem("lastCity", city); // Save the city
+      } catch (error) {
+        displayError(error.message);
+        weatherDisplay.textContent = ""; // Clear "Loading..." text
+      }
+    });
+
+    /**
+     * On page load, get weather for the last searched city.
+     */
+    window.addEventListener("DOMContentLoaded", () => {
+      const lastCity = localStorage.getItem("lastCity");
+      if (lastCity) {
+        cityInput.value = lastCity;
+        // Trigger the form submission to load the data
+        weatherForm.dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
+</body>
+</html>
